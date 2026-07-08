@@ -1,14 +1,19 @@
-import asyncio, random, logging, html, aiohttp, os
+import asyncio, random, logging, html, os
 from telegram import Bot
 from telegram.constants import ParseMode
 from aliexpress_api import AliexpressApi, models
 
-# Configurações usando Variáveis de Ambiente (para funcionar na nuvem)
+# Configuração de logs para ver erros na Railway
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Configurações via Variáveis de Ambiente
 BOT_TOKEN = os.getenv('BOT_TOKEN')
 CHAT_ID = os.getenv('CHAT_ID')
 ALI_KEY = os.getenv('ALI_KEY')
 ALI_SECRET = os.getenv('ALI_SECRET')
 
+# Inicialização da API
 manager = AliexpressApi(ALI_KEY, ALI_SECRET, models.Language.PT, models.Currency.BRL, 'default')
 
 def formatar_mensagem(p):
@@ -16,16 +21,17 @@ def formatar_mensagem(p):
     preco_atual = float(getattr(p, 'target_sale_price', 0))
     preco_antigo = float(getattr(p, 'original_price', preco_atual * 1.5))
     
-    # Trava matemática: se o preço antigo for menor que o atual, corrigimos
+    # Trava matemática
     if preco_antigo <= preco_atual: preco_antigo = preco_atual * 1.4
-    
-    # Cálculo seguro de desconto (trava entre 0 e 95%)
     desconto = int(((preco_antigo - preco_atual) / preco_antigo) * 100)
     desconto = max(1, min(desconto, 95))
     
-    # Trava de nota: garante que fique entre 1.0 e 5.0
-    nota = float(getattr(p, 'nota_validada', 4.5))
-    nota = max(1.0, min(nota, 5.0))
+    # Validação segura da nota
+    try:
+        nota = float(str(getattr(p, 'evaluate_rate', 4.5)).replace('%', ''))
+        if nota > 5: nota /= 20
+        nota = max(1.0, min(nota, 5.0))
+    except: nota = 4.5
     
     link = getattr(p, 'promotion_link', f"https://pt.aliexpress.com/item/{getattr(p, 'product_id', '')}.html")
     
@@ -36,25 +42,29 @@ def formatar_mensagem(p):
 async def main():
     bot = Bot(token=BOT_TOKEN)
     termos = ['fone bluetooth', 'smartwatch', 'ssd nvme', 'mouse gamer', 'power bank']
+    
+    logger.info("Bot iniciado com sucesso!")
+    
     while True:
-        termo = random.choice(termos)
-        produtos = manager.get_products(keywords=termo, sort='VOLUME_DESC', target_currency='BRL', target_language='PT')
-        
-        if produtos and hasattr(produtos, 'products') and produtos.products:
-            p = produtos.products[0]
-            # Normalização da nota antes de passar para a mensagem
-            try:
-                n = float(str(getattr(p, 'evaluate_rate', 4.5)).replace('%', ''))
-                p.nota_validada = n/20 if n > 5 else n
-            except: p.nota_validada = 4.5
+        try:
+            termo = random.choice(termos)
+            produtos = manager.get_products(keywords=termo, sort='VOLUME_DESC', target_currency='BRL', target_language='PT')
             
-            # Envio
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(p.product_main_image_url) as resp:
-                        await bot.send_photo(CHAT_ID, photo=await resp.read(), caption=formatar_mensagem(p), parse_mode=ParseMode.HTML)
-            except: pass
-        await asyncio.sleep(900)
+            if produtos and hasattr(produtos, 'products') and produtos.products:
+                p = produtos.products[0]
+                # Envio direto via URL (mais estável)
+                await bot.send_photo(
+                    chat_id=CHAT_ID, 
+                    photo=p.product_main_image_url, 
+                    caption=formatar_mensagem(p), 
+                    parse_mode=ParseMode.HTML
+                )
+                logger.info(f"Oferta enviada: {p.product_title}")
+            
+        except Exception as e:
+            logger.error(f"Erro ao enviar oferta: {e}")
+            
+        await asyncio.sleep(900) # Aguarda 15 minutos
 
 if __name__ == "__main__":
     asyncio.run(main())
