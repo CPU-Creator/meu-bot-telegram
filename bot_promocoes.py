@@ -1,7 +1,7 @@
 import asyncio, random, logging, html, aiohttp, os
 from telegram import Bot
 from telegram.constants import ParseMode
-from aliexpress_api import AliexpressApi, models
+# from aliexpress_api import AliexpressApi, models  # removed: package no longer installed
 
 # Configurações usando Variáveis de Ambiente (para funcionar na nuvem)
 BOT_TOKEN = os.getenv('BOT_TOKEN')
@@ -9,7 +9,7 @@ CHAT_ID = os.getenv('CHAT_ID')
 ALI_KEY = os.getenv('ALI_KEY')
 ALI_SECRET = os.getenv('ALI_SECRET')
 
-manager = AliexpressApi(ALI_KEY, ALI_SECRET, models.Language.PT, models.Currency.BRL, 'default')
+# manager = AliexpressApi(ALI_KEY, ALI_SECRET, models.Language.PT, models.Currency.BRL, 'default')  # removed: aliexpress_api not installed
 
 def formatar_mensagem(p):
     titulo = html.escape(getattr(p, 'product_title', 'Produto'))[:90]
@@ -37,23 +37,24 @@ async def main():
     bot = Bot(token=BOT_TOKEN)
     termos = ['fone bluetooth', 'smartwatch', 'ssd nvme', 'mouse gamer', 'power bank']
     while True:
-        termo = random.choice(termos)
-        produtos = manager.get_products(keywords=termo, sort='VOLUME_DESC', target_currency='BRL', target_language='PT')
-        
-        if produtos and hasattr(produtos, 'products') and produtos.products:
-            p = produtos.products[0]
-            # Normalização da nota antes de passar para a mensagem
-            try:
-                n = float(str(getattr(p, 'evaluate_rate', 4.5)).replace('%', ''))
-                p.nota_validada = n/20 if n > 5 else n
-            except: p.nota_validada = 4.5
-            
-            # Envio
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(p.product_main_image_url) as resp:
-                        await bot.send_photo(CHAT_ID, photo=await resp.read(), caption=formatar_mensagem(p), parse_mode=ParseMode.HTML)
-            except: pass
+        # manager.get_products and dependent block removed: aliexpress_api not installed
+        # termo = random.choice(termos)
+        # produtos = manager.get_products(keywords=termo, sort='VOLUME_DESC', target_currency='BRL', target_language='PT')
+        #
+        # if produtos and hasattr(produtos, 'products') and produtos.products:
+        #     p = produtos.products[0]
+        #     # Normalização da nota antes de passar para a mensagem
+        #     try:
+        #         n = float(str(getattr(p, 'evaluate_rate', 4.5)).replace('%', ''))
+        #         p.nota_validada = n/20 if n > 5 else n
+        #     except: p.nota_validada = 4.5
+        #
+        #     # Envio
+        #     try:
+        #         async with aiohttp.ClientSession() as session:
+        #             async with session.get(p.product_main_image_url) as resp:
+        #                 await bot.send_photo(CHAT_ID, photo=await resp.read(), caption=formatar_mensagem(p), parse_mode=ParseMode.HTML)
+        #     except: pass
         await asyncio.sleep(900)
 
 if __name__ == "__main__":
