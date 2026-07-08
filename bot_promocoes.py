@@ -8,10 +8,10 @@ from telegram.constants import ParseMode
 from aliexpress_api import AliexpressApi, models
 
 # --- CONFIGURAÇÕES ---
-BOT_TOKEN = '8887685795:AAEzXitveGtYHt-fQ0XA0gqtpDsV-bEKFek'
-CHAT_ID = '-1004496554566'
-ALI_KEY = '538904'
-ALI_SECRET = '44A11VBSkzXXKReeQDyNzcszKFCd9VOS'
+BOT_TOKEN = 'BOT_TOKEN'
+CHAT_ID = 'CHAT_ID'
+ALI_KEY = 'ALI_KEY'
+ALI_SECRET = 'ALI_SECRET'
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(message)s')
 logger = logging.getLogger(__name__)
