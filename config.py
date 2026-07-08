@@ -1,4 +1,2 @@
 # Arquivo de configuração
 # ALIEXPRESS API
-APP_KEY = '538904'
-APP_SECRET = '44A11VBSkzXXKReeQDyNzcszKFCd9VOS'
