@@ -1,9 +1,9 @@
 from aliexpress_api import AliexpressApi, models
 
 # --- AS SUAS CREDENCIAIS ---
-KEY = '538904'
-SECRET = '44A11VBSkzXXKReeQDyNzcszKFCd9VOS' # Mantenha a chave que está funcionando!
-TRACKING_ID = 'default' 
+KEY = 'ALI_KEY'
+SECRET = 'ALI_SECRET' # Mantenha a chave que está funcionando!
+TRACKING_ID = 'track_id' 
 
 # Inicializa a API
 aliexpress = AliexpressApi(KEY, SECRET, models.Language.PT, models.Currency.BRL, TRACKING_ID)
