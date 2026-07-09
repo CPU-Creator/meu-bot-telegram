@@ -29,8 +29,11 @@ def analisar_produto(texto: str, contexto: str = "VOLUME_DESC") -> Dict[str, Any
         else "Produto sem destaque suficiente para publicação neste momento."
     )
 
+    # Verificar se OpenAI está habilitado
+    enable_openai = os.getenv("ENABLE_OPENAI", "0").strip().lower() in ("1", "true", "yes")
     api_key = os.getenv("OPENAI_API_KEY", "").strip()
-    if api_key and OpenAI is not None:
+    
+    if enable_openai and api_key and OpenAI is not None:
         try:
             client = OpenAI(api_key=api_key)
             system_msg = (
