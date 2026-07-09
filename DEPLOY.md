@@ -80,4 +80,36 @@ docker run -d --env-file /opt/promoradar/.env --name promoradar --restart unless
 
 Substitua `<OWNER>` pelo nome da organização/usuário do GitHub (ex.: CPU-Creator).
 
+6) Railway
+
+O repositório já inclui [railway.toml](railway.toml) com build via Dockerfile, start command e healthcheck.
+
+- Crie um novo projeto no Railway apontando para este repositório.
+- Selecione a raiz do repositório como diretório de deploy.
+- Configure as variáveis de ambiente no Railway com os valores do `.env`.
+- Não defina `WEB_SERVER_PORT` no Railway; o app usa automaticamente a variável `PORT` fornecida pela plataforma.
+- Mantenha `WEB_SERVER_ENABLED=1` para expor o callback OAuth e o healthcheck.
+
+Variáveis mínimas para o serviço principal:
+
+- `BOT_TOKEN`
+- `CHAT_ID`
+- `ALI_KEY`
+- `ALI_SECRET`
+- `OPENAI_API_KEY` se o fluxo de análise usar esse recurso
+
+Variáveis do OAuth do Mercado Livre, se você for usar a captura automática do `code`:
+
+- `ML_APP_ID`
+- `ML_CLIENT_SECRET`
+- `ML_REDIRECT_URI`
+
+Para o agendador de relatórios, crie um segundo serviço no Railway usando o mesmo repositório e defina o start command como:
+
+```bash
+python -u scripts/agendar_relatorio_diario.py
+```
+
+Se você quiser apenas o bot principal, basta manter o serviço web com `python bot_promocoes.py`.
+
 

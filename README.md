@@ -58,3 +58,5 @@ PYTHONPATH=. python scripts/validate_parsing.py
 ## Deploy
 
 Veja [DEPLOY.md](DEPLOY.md) para opções recomendadas de deploy (Docker e systemd).
+
+Se você estiver usando Railway, consulte a seção específica no [DEPLOY.md](DEPLOY.md) para configurar o serviço web principal e, se quiser, um segundo serviço para o agendador de relatórios.
