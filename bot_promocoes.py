@@ -29,8 +29,10 @@ from memoria import (
 
 load_dotenv()
 
-# configurar logging básico
-logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s")
+# configurar logging básico (nível configurável via LOG_LEVEL)
+LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO").upper()
+numeric_level = getattr(logging, LOG_LEVEL, logging.INFO)
+logging.basicConfig(level=numeric_level, format="%(asctime)s %(levelname)s: %(message)s")
 
 
 # ==========================
