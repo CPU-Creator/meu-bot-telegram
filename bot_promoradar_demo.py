@@ -121,7 +121,19 @@ async def main():
     logger.info(f"🔍 Termos: {', '.join(TERMOS_BUSCA[:5])}")
     logger.info("=" * 60)
     
-    await buscar_publicar()
+    # Loop contínuo a cada 1 hora
+    while True:
+        try:
+            await buscar_publicar()
+            logger.info("⏳ Aguardando 1 hora para próxima busca...")
+            await asyncio.sleep(3600)  # 1 hora
+        except KeyboardInterrupt:
+            logger.info("🛑 Bot interrompido pelo usuário")
+            break
+        except Exception as e:
+            logger.error(f"Erro no loop: {e}")
+            logger.info("⏳ Tentando novamente em 5 minutos...")
+            await asyncio.sleep(300)  # 5 minutos se houver erro
 
 if __name__ == "__main__":
     asyncio.run(main())
