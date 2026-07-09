@@ -1,1 +1,15 @@
+__pycache__/
+*.py[cod]
 .env
+promocoes.db
+venv/
+/.venv
+*.sqlite3
+*.log
+dist/
+build/
+.pytest_cache/
+/.idea/
+/.vscode/
+Dockerfile
+docker-compose.override.yml.env
