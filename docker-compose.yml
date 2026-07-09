@@ -1,0 +1,14 @@
+version: '3.8'
+services:
+  promoradar:
+    build: .
+    env_file:
+      - .env
+    restart: unless-stopped
+    volumes:
+      - ./promocoes.db:/app/promocoes.db
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"

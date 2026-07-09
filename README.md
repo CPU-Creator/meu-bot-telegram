@@ -26,3 +26,7 @@ PYTHONPATH=. pytest -q
 ```bash
 PYTHONPATH=. python scripts/validate_parsing.py
 ```
+
+## Deploy
+
+Veja [DEPLOY.md](DEPLOY.md) para opções recomendadas de deploy (Docker e systemd).
