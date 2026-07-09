@@ -12,22 +12,23 @@ docker build -t promoradar:latest .
 
 - Criar arquivo `.env` a partir de `.env.example` e preencher credenciais.
 
-- Rodar com docker-compose:
+- Rodar com docker compose:
 
 ```bash
-docker-compose up -d --build
+docker compose up -d --build
 ```
 
 Logs:
 
 ```bash
-docker-compose logs -f
+docker compose logs -f
 ```
 
 2) Usando systemd (direto no servidor)
 
 - Copie `systemd/promoradar-relatorio.service` e `systemd/promoradar.env.example` para `/etc/systemd/system/` e `/etc/default/` (ou conforme convenção) e ajuste caminhos.
 - Certifique-se de ter um ambiente Python com dependências instaladas (virtualenv) e que o `.env` esteja no diretório correto.
+- Você também pode instalar o serviço com `sudo scripts/install_systemd_service.sh /caminho/absoluto/do/repositorio usuario_do_servico`.
 - Habilite e inicie o serviço:
 
 ```bash

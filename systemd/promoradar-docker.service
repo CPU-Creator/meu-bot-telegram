@@ -8,8 +8,8 @@ Type=oneshot
 WorkingDirectory=/opt/promoradar
 EnvironmentFile=/etc/default/promoradar
 RemainAfterExit=yes
-ExecStart=/usr/bin/docker-compose -f /opt/promoradar/docker-compose.yml up -d --remove-orphans
-ExecStop=/usr/bin/docker-compose -f /opt/promoradar/docker-compose.yml down
+ExecStart=/usr/bin/docker compose -f /opt/promoradar/docker-compose.yml up -d --remove-orphans
+ExecStop=/usr/bin/docker compose -f /opt/promoradar/docker-compose.yml down
 TimeoutStartSec=300
 TimeoutStopSec=300
 

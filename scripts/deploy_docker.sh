@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Script de deploy local usando docker-compose.
+# Script de deploy local usando docker compose.
 # Uso: ./scripts/deploy_docker.sh /caminho/para/projeto
 
 ROOT_DIR=${1:-$(pwd)}
@@ -19,8 +19,8 @@ fi
 
 docker build -t promoradar:latest .
 
-docker-compose pull || true
+docker compose pull || true
 
-docker-compose up -d --build
+docker compose up -d --build
 
-echo "Deploy iniciado. Verifique logs com: docker-compose logs -f"
+echo "Deploy iniciado. Verifique logs com: docker compose logs -f"
