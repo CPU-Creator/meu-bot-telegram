@@ -1,0 +1,17 @@
+[Unit]
+Description=PromoRadar (Docker Compose)
+After=network.target docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/promoradar
+EnvironmentFile=/etc/default/promoradar
+RemainAfterExit=yes
+ExecStart=/usr/bin/docker-compose -f /opt/promoradar/docker-compose.yml up -d --remove-orphans
+ExecStop=/usr/bin/docker-compose -f /opt/promoradar/docker-compose.yml down
+TimeoutStartSec=300
+TimeoutStopSec=300
+
+[Install]
+WantedBy=multi-user.target

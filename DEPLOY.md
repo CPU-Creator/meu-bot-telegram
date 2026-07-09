@@ -37,6 +37,26 @@ sudo systemctl start promoradar-relatorio.service
 sudo journalctl -u promoradar-relatorio -f
 ```
 
+3) Usando Docker Compose + systemd (recomendado quando usar containers)
+
+- Copie o repositório para `/opt/promoradar` (ou outro diretório de sua escolha).
+- Copie `systemd/promoradar-docker.service` para `/etc/systemd/system/promoradar-docker.service` e ajuste `WorkingDirectory` e o caminho do `docker-compose.yml` se necessário.
+- Crie `/etc/default/promoradar` contendo `COMPOSE_PROJECT_NAME` e outras variáveis opcionais ou deixe vazio.
+- Exemplo de comandos:
+
+```bash
+sudo cp systemd/promoradar-docker.service /etc/systemd/system/
+sudo mkdir -p /opt/promoradar
+# copie os arquivos do projeto para /opt/promoradar
+sudo cp -r . /opt/promoradar
+sudo systemctl daemon-reload
+sudo systemctl enable promoradar-docker.service
+sudo systemctl start promoradar-docker.service
+sudo journalctl -u promoradar-docker -f
+```
+
+Também incluí um script utilitário `scripts/deploy_docker.sh` para construir a imagem e iniciar o compose no servidor.
+
 3) Dicas de segurança
 
 - Nunca versionar `.env` com segredos.
