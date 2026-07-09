@@ -1,0 +1,18 @@
+[Unit]
+Description=PromoRadar Relatorio Diario
+After=network.target
+
+[Service]
+Type=simple
+# substitua pelo usuário que deve rodar o serviço
+User=YOUR_USER
+# substitua pelo diretório absoluto do repositório
+WorkingDirectory=/path/to/your/repo
+# caminho para arquivo com variáveis de ambiente (opcional)
+EnvironmentFile=/etc/default/promoradar
+ExecStart=/usr/bin/env bash -c 'cd /path/to/your/repo && PYTHONPATH=. python3 scripts/agendar_relatorio_diario.py'
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
