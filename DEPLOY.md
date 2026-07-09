@@ -67,3 +67,16 @@ Também incluí um script utilitário `scripts/deploy_docker.sh` para construir 
 
 - Um workflow básico foi adicionado em `.github/workflows/ci.yml` para rodar testes e o harness.
 
+5) Publicar/usar imagem no registro
+
+- O repositório possui um workflow `.github/workflows/publish-image.yml` que publica a imagem para o GitHub Container Registry (GHCR) ao fazer push na `main`.
+- Para usar a imagem publicada em um servidor, puxe a imagem e execute:
+
+```bash
+docker pull ghcr.io/<OWNER>/meu-bot-telegram:latest
+docker run -d --env-file /opt/promoradar/.env --name promoradar --restart unless-stopped ghcr.io/<OWNER>/meu-bot-telegram:latest
+```
+
+Substitua `<OWNER>` pelo nome da organização/usuário do GitHub (ex.: CPU-Creator).
+
+
