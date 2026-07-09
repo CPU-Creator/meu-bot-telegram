@@ -12,6 +12,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Normalize image owner
+        shell: bash
+        run: echo "IMAGE_OWNER=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_ENV"
+
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
 
@@ -31,5 +35,5 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/meu-bot-telegram:latest
-            ghcr.io/${{ github.repository_owner }}/meu-bot-telegram:${{ github.sha }}
+            ghcr.io/${{ env.IMAGE_OWNER }}/meu-bot-telegram:latest
+            ghcr.io/${{ env.IMAGE_OWNER }}/meu-bot-telegram:${{ github.sha }}
