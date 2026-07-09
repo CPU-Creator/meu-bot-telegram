@@ -41,6 +41,34 @@ Quando o Mercado Livre redirecionar com `?code=...`, o valor será salvo no arqu
 
 Se `ML_APP_ID`, `ML_CLIENT_SECRET` e `ML_REDIRECT_URI` estiverem configurados, o bot também troca esse `code` por token e salva o resultado em `ML_TOKEN_FILE`.
 
+## Nichos e link de afiliado do Mercado Livre
+
+O bot pode buscar produtos do Mercado Livre por nicho e publicar no Telegram usando um link afiliado seu.
+
+Variáveis no `.env`:
+
+- `ENABLE_MERCADOLIVRE=1` para habilitar a fonte Mercado Livre
+- `ENABLE_ALIEXPRESS=0` se quiser rodar somente com Mercado Livre
+- `TERMOS_BUSCA` para definir os termos usados nas buscas (separados por vírgula)
+- `NICHO_PALAVRAS` para filtrar quais produtos entram no seu nicho (separadas por vírgula)
+- `ML_SITE_ID` (padrão `MLB`)
+- `ML_SEARCH_LIMIT` (padrão `20`)
+- `ML_AFFILIATE_URL_TEMPLATE` para transformar a URL do produto no seu link afiliado
+
+`ML_AFFILIATE_URL_TEMPLATE` aceita placeholders:
+
+- `{url}` URL original do produto
+- `{url_encoded}` URL original codificada
+- `{item_id}` ID do item
+- `{term}` termo da busca
+- `{term_encoded}` termo da busca codificado
+
+Exemplo:
+
+```text
+ML_AFFILIATE_URL_TEMPLATE=https://seu-dominio.com/r?destino={url_encoded}
+```
+
 ## Testes e validação
 
 - Rodar testes unitários:

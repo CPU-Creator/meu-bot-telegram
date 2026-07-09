@@ -10,6 +10,8 @@ import logging
 import tempfile
 import json
 from io import BytesIO
+from types import SimpleNamespace
+from urllib.parse import quote
 from urllib.request import urlopen
 
 from PIL import Image
@@ -64,6 +66,15 @@ TRACKING_ID = os.getenv(
     ""
 ).strip()
 
+ENABLE_ALIEXPRESS = os.getenv("ENABLE_ALIEXPRESS", "1").strip().lower() in {"1", "true", "yes", "sim", "on"}
+ENABLE_MERCADOLIVRE = os.getenv("ENABLE_MERCADOLIVRE", "1").strip().lower() in {"1", "true", "yes", "sim", "on"}
+ML_SITE_ID = os.getenv("ML_SITE_ID", "MLB").strip() or "MLB"
+ML_SEARCH_LIMIT = int(os.getenv("ML_SEARCH_LIMIT", "20"))
+ML_AFFILIATE_URL_TEMPLATE = os.getenv(
+    "ML_AFFILIATE_URL_TEMPLATE",
+    "{url}",
+).strip() or "{url}"
+
 # valores configuráveis
 INTERVALO = int(os.getenv("INTERVALO", "300"))
 LOGO = os.getenv("LOGO", "").strip()
@@ -95,37 +106,49 @@ except Exception as e:
 # ==========================
 
 
-termos = [
-
+TERMO_BUSCA_PADRAO = [
     "mouse gamer",
-
     "teclado mecanico",
-
     "fone bluetooth",
-
     "headset gamer",
-
     "ssd nvme",
-
     "memoria ram ddr4",
-
     "memoria ram ddr5",
-
     "carregador turbo",
-
     "controle bluetooth",
-
     "fita led rgb",
-
     "lampada inteligente",
-
     "camera wifi",
-
     "air fryer",
-
-    "cafeteira"
-
+    "cafeteira",
 ]
+
+NICHO_PALAVRAS_PADRAO = [
+    "mouse",
+    "teclado",
+    "fone",
+    "headset",
+    "ssd",
+    "nvme",
+    "ram",
+    "memoria",
+    "carregador",
+    "controle",
+    "led",
+    "smart",
+    "wifi",
+    "camera",
+    "air fryer",
+    "cafeteira",
+]
+
+termos = [item.strip() for item in os.getenv("TERMOS_BUSCA", ",".join(TERMO_BUSCA_PADRAO)).split(",") if item.strip()]
+if not termos:
+    termos = TERMO_BUSCA_PADRAO[:]
+
+nicho_palavras = [item.strip().lower() for item in os.getenv("NICHO_PALAVRAS", ",".join(NICHO_PALAVRAS_PADRAO)).split(",") if item.strip()]
+if not nicho_palavras:
+    nicho_palavras = NICHO_PALAVRAS_PADRAO[:]
 
 
 
@@ -134,40 +157,96 @@ termos = [
 # ==========================
 
 
+def _obter_titulo_produto(produto):
+    titulo = getattr(produto, "product_title", None)
+    if titulo:
+        return str(titulo)
+
+    if hasattr(produto, "title"):
+        titulo = getattr(produto, "title", None)
+        if titulo:
+            return str(titulo)
+
+    if isinstance(produto, dict):
+        return str(produto.get("product_title") or produto.get("title") or "")
+
+    return ""
+
+
 def pertence_nicho(produto):
+    nome = _obter_titulo_produto(produto).lower()
+    if not nome:
+        return False
 
-    nome = produto.product_title.lower()
-
-
-    palavras = [
-
-        "mouse",
-        "teclado",
-        "fone",
-        "headset",
-        "ssd",
-        "nvme",
-        "ram",
-        "memoria",
-        "carregador",
-        "controle",
-        "led",
-        "smart",
-        "wifi",
-        "camera",
-        "air fryer",
-        "cafeteira"
-
-    ]
+    return any(palavra in nome for palavra in nicho_palavras)
 
 
-    return any(
+def construir_link_afiliado_mercadolivre(url_produto, item_id, termo):
+    if not url_produto:
+        return "#"
 
-        palavra in nome
+    placeholders = {
+        "url": url_produto,
+        "url_encoded": quote(url_produto, safe=""),
+        "item_id": item_id or "",
+        "term": termo or "",
+        "term_encoded": quote(termo or "", safe=""),
+    }
 
-        for palavra in palavras
+    try:
+        return ML_AFFILIATE_URL_TEMPLATE.format(**placeholders)
+    except Exception as erro:
+        logging.warning("Template ML_AFFILIATE_URL_TEMPLATE inválido (%s). Usando URL original.", erro)
+        return url_produto
 
-    )
+
+async def buscar_produtos_mercadolivre(termo, limite=20):
+    limite = max(1, min(int(limite), 50))
+    endpoint = f"https://api.mercadolibre.com/sites/{ML_SITE_ID}/search"
+
+    params = {
+        "q": termo,
+        "limit": str(limite),
+    }
+
+    async with ClientSession() as session:
+        async with session.get(endpoint, params=params, timeout=30) as resposta:
+            if resposta.status >= 400:
+                texto = await resposta.text()
+                raise RuntimeError(f"Falha busca Mercado Livre ({resposta.status}): {texto}")
+
+            payload = await resposta.json(content_type=None)
+
+    itens = payload.get("results") if isinstance(payload, dict) else []
+    produtos = []
+    for item in itens or []:
+        if not isinstance(item, dict):
+            continue
+
+        item_id = str(item.get("id") or "").strip()
+        titulo = str(item.get("title") or "").strip()
+        if not item_id or not titulo:
+            continue
+
+        link_original = str(item.get("permalink") or "").strip()
+        link_afiliado = construir_link_afiliado_mercadolivre(link_original, item_id, termo)
+        shipping = item.get("shipping") if isinstance(item.get("shipping"), dict) else {}
+
+        produto_ml = SimpleNamespace(
+            product_id=f"ML-{item_id}",
+            product_title=titulo,
+            target_sale_price=item.get("price", 0),
+            original_price=item.get("original_price") or item.get("price", 0),
+            promotion_link=link_afiliado,
+            product_main_image_url=item.get("thumbnail") or item.get("secure_thumbnail") or "",
+            evaluate_rate=item.get("seller", {}).get("seller_reputation", {}).get("level_id", "N/A") if isinstance(item.get("seller"), dict) else "N/A",
+            lastest_volume=item.get("sold_quantity", "N/A"),
+            free_shipping=bool(shipping.get("free_shipping")),
+            source_platform="MERCADOLIVRE",
+        )
+        produtos.append(produto_ml)
+
+    return produtos
 
 
 
@@ -1084,7 +1163,7 @@ async def main():
             logging.error("Falha ao iniciar servidor web: %s", erro)
             return
 
-    if not BOT_TOKEN or not CHAT_ID or manager is None:
+    if not BOT_TOKEN or not CHAT_ID:
         if WEB_SERVER_ENABLED:
             logging.warning(
                 "Servidor OAuth ativo. Loop de promoções desativado porque BOT_TOKEN/CHAT_ID/ALI_KEY/ALI_SECRET não estão completos."
@@ -1099,9 +1178,14 @@ async def main():
 
         if not BOT_TOKEN or not CHAT_ID:
             logging.error("Configuração incompleta: defina BOT_TOKEN e CHAT_ID no arquivo .env antes de iniciar o bot.")
-        if manager is None:
-            logging.error("AliexpressApi não inicializado. Verifique ALI_KEY/ALI_SECRET e dependências.")
         return
+
+    if not ENABLE_ALIEXPRESS and not ENABLE_MERCADOLIVRE:
+        logging.error("Nenhuma fonte de produtos habilitada. Ative ENABLE_ALIEXPRESS e/ou ENABLE_MERCADOLIVRE no .env.")
+        return
+
+    if ENABLE_ALIEXPRESS and manager is None:
+        logging.warning("AliExpress habilitado, mas client indisponível. O bot seguirá apenas com Mercado Livre.")
 
     bot = Bot(
         token=BOT_TOKEN
@@ -1138,24 +1222,30 @@ async def main():
 
                 # coletar resultados de diferentes ordenações (vendas e popularidade)
                 coletados = []
-                for sort_mode in SEARCH_SORTS:
-                    try:
-                        if manager is None:
-                            raise RuntimeError("Aliexpress manager não inicializado")
-                        resposta = manager.get_products(
-                            keywords=termo,
-                            sort=sort_mode,
-                            target_currency="BRL",
-                            target_language="PT",
-                            tracking_id=TRACKING_ID,
-                        )
-                    except Exception as e:
-                        logging.warning("Aviso: falha na busca com sort=%s: %s", sort_mode, e)
-                        resposta = None
+                if ENABLE_ALIEXPRESS and manager is not None:
+                    for sort_mode in SEARCH_SORTS:
+                        try:
+                            resposta = manager.get_products(
+                                keywords=termo,
+                                sort=sort_mode,
+                                target_currency="BRL",
+                                target_language="PT",
+                                tracking_id=TRACKING_ID,
+                            )
+                        except Exception as e:
+                            logging.warning("Aviso: falha na busca AliExpress com sort=%s: %s", sort_mode, e)
+                            resposta = None
 
-                    if resposta and getattr(resposta, "products", None):
-                        # guardar tuplas (produto, origem)
-                        coletados.extend([(p, sort_mode) for p in resposta.products[:15]])
+                        if resposta and getattr(resposta, "products", None):
+                            # guardar tuplas (produto, origem)
+                            coletados.extend([(p, sort_mode) for p in resposta.products[:15]])
+
+                if ENABLE_MERCADOLIVRE:
+                    try:
+                        ml_produtos = await buscar_produtos_mercadolivre(termo, limite=ML_SEARCH_LIMIT)
+                        coletados.extend([(p, "MERCADOLIVRE") for p in ml_produtos])
+                    except Exception as e:
+                        logging.warning("Aviso: falha na busca Mercado Livre: %s", e)
 
                 # telemetria: contagem por modo
                 contador_sort = {}
@@ -1187,7 +1277,8 @@ async def main():
                         # determinar contexto de busca para adaptar legenda
                         contexto_produto = origem_map.get(getattr(produto, "product_id"), "VOLUME_DESC")
 
-                        produto = enriquecer_produto_com_detalhes(manager, produto)
+                        if contexto_produto in SEARCH_SORTS:
+                            produto = enriquecer_produto_com_detalhes(manager, produto)
 
 
                         id_produto = produto.product_id

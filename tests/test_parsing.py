@@ -6,7 +6,12 @@ from unittest.mock import patch
 from PIL import Image
 
 import bot_promocoes
-from bot_promocoes import criar_mensagem, enriquecer_produto_com_detalhes
+from bot_promocoes import (
+    construir_link_afiliado_mercadolivre,
+    criar_mensagem,
+    enriquecer_produto_com_detalhes,
+    pertence_nicho,
+)
 
 
 def test_criar_mensagem_cupom_string():
@@ -143,3 +148,21 @@ def test_colocar_logo_em_imagem_remota(tmp_path):
         assert imagem_final.getpixel((25, 25)) != (255, 255, 255, 255)
 
     Path(arquivo).unlink(missing_ok=True)
+
+
+def test_construir_link_afiliado_mercadolivre_com_template_customizado():
+    with patch.object(bot_promocoes, "ML_AFFILIATE_URL_TEMPLATE", "https://meu-redirecionador.com/?u={url_encoded}&item={item_id}&q={term_encoded}"):
+        link = construir_link_afiliado_mercadolivre(
+            "https://produto.mercadolivre.com.br/MLB-123",
+            "MLB123",
+            "mouse gamer",
+        )
+
+    assert "meu-redirecionador.com" in link
+    assert "item=MLB123" in link
+    assert "mouse%20gamer" in link
+
+
+def test_pertence_nicho_funciona_com_dict():
+    produto_dict = {"title": "Teclado Mecanico RGB Gamer"}
+    assert pertence_nicho(produto_dict) is True
