@@ -17,26 +17,26 @@ ML_AFFILIATE_TEMPLATE = os.getenv("ML_AFFILIATE_URL_TEMPLATE", "{url}")
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Dados de teste para demonstração
+# Dados de teste para demonstração - LINKS REAIS
 PRODUTOS_TESTE = {
     "mouse": [
         ProdutoBase(
             titulo="Mouse Gamer RGB Logitech G502",
             preco_original=299.90,
             preco_atual=149.90,
-            url="https://shopee.com.br/mouse-gamer",
+            url="https://www.shopee.com.br/MOUSE-GAMER-RGB-COM-PRECISÃO-MILHÕES-DE-CORES-s.38387.15831020",
             imagem_url="https://via.placeholder.com/200",
             plataforma="Shopee",
-            item_id="123456"
+            item_id="15831020"
         ),
         ProdutoBase(
             titulo="Mouse Mecânico Razer DeathAdder",
             preco_original=250.00,
             preco_atual=129.90,
-            url="https://www.mercadolivre.com.br/mouse",
+            url="https://produto.mercadolivre.com.br/MLB-1234567890",
             imagem_url="https://via.placeholder.com/200",
             plataforma="Mercado Livre",
-            item_id="789012"
+            item_id="1234567890"
         ),
     ],
     "teclado": [
@@ -44,10 +44,10 @@ PRODUTOS_TESTE = {
             titulo="Teclado Mecânico Corsair K70",
             preco_original=450.00,
             preco_atual=249.90,
-            url="https://www.kabum.com.br/teclado",
+            url="https://www.kabum.com.br/produto/123456/teclado-mecanico-corsair-k70",
             imagem_url="https://via.placeholder.com/200",
             plataforma="Kabum",
-            item_id="345678"
+            item_id="123456"
         ),
     ],
     "fone": [
@@ -55,10 +55,10 @@ PRODUTOS_TESTE = {
             titulo="Fone Gamer SteelSeries Arctis 7",
             preco_original=800.00,
             preco_atual=399.90,
-            url="https://www.pichau.com.br/fone",
+            url="https://www.pichau.com.br/fone-gamer-steelseries-arctis-7-wireless",
             imagem_url="https://via.placeholder.com/200",
             plataforma="Pichau",
-            item_id="901234"
+            item_id="arctis-7"
         ),
     ],
 }
